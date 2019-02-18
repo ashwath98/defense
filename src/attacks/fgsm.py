@@ -10,41 +10,22 @@ from abc import ABC, abstractmethod
 
 class Attack(ABC):
 
-  def __init__(self,
-               model,
-               device,
-               data,
-               epsilon,
-               y=None,
-               targeted=False,
-               min_value=0,
-               max_value=1):
+  def __init__(self, model, device, targeted=False, min_value=0, max_value=1):
     self.model = model
     self.device = device
-    self.data = data
-    self.epsilon = epsilon
-    self.y = y
     self.min_value = min_value
     self.max_value = max_value
     self.targeted = targeted
 
   @abstractmethod
-  def generate(self):
+  def generate(self, data, target, epsilon):
 
     pass
 
 
 class FGSM(Attack):
 
-  def __init__(self,
-               model,
-               device,
-               data,
-               epsilon,
-               y=None,
-               targeted=False,
-               min_value=0,
-               max_value=1):
+  def __init__(self, model, device, targeted=False, min_value=0, max_value=1):
     """
         parameters:-
         model :-The model under attack
@@ -60,8 +41,7 @@ class FGSM(Attack):
         Case 3 :-y is None and targeted is False ... then the predicted outputs of the model are treated as the real outputs and the attack takes place
         Case 4 :-y is None and targeted is True .. Invalid Input"""
 
-    super().__init__(model, device, data, epsilon, y, targeted, min_value,
-                     max_value)
+    super().__init__(model, device, targeted, min_value, max_value)
 
   def fgsm_update(self, image, epsilon, data_grad):
     """Update the image with gradients of input"""
@@ -72,26 +52,28 @@ class FGSM(Attack):
                                   self.max_value)
     return perturbed_image
 
-  def generate(self):
+  def generate(self, data, y, epsilon):
 
-    if self.targeted == True and self.y is None:
+    if self.targeted == True and y is None:
 
       print("label should be specified when targeted is true")
       return -1, -1, -1
 
-    if self.y is not None and type(self.y) != torch.Tensor:
+    if y is not None and type(y) != torch.Tensor:
 
-      self.y = torch.Tensor([self.y]).type(torch.int64)
+      y = torch.Tensor([y]).type(torch.int64)
 
-    data = self.data.to(self.device)
+    data = data.to(self.device)
     data.requires_grad = True
     output = self.model(data)
     init_pred = output.max(1, keepdim=True)[1]
-    if self.y is None:
+    if y is None:
+
       # if no y is specified use predictions as the label for the attack
       target = init_pred.view(1)
     else:
-      target = self.y  # use y itself as the target
+
+      target = y  # use y itself as the target
     target = target.to(self.device)
     loss = F.nll_loss(output, target)
     if self.targeted:
@@ -100,7 +82,7 @@ class FGSM(Attack):
 
     loss.backward()
     data_grad = data.grad.data
-    perturbed_data = self.fgsm_update(data, self.epsilon, data_grad)
+    perturbed_data = self.fgsm_update(data, epsilon, data_grad)
     output = self.model(perturbed_data)
     final_pred = output.max(1, keepdim=True)[1]
     return init_pred.item(), perturbed_data, final_pred.item()
