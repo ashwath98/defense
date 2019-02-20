@@ -68,10 +68,12 @@ class Test_Attack:
         epsilon, correct, total_examples, final_acc))
 
     return final_acc, adv_examples
-if __name__==__main__:
-  
+if _name_ == '_main_':
+
+
   epsilons = [0, .05, .1, .15, .2, .25, .3]
   model,test_loader,device=create_model(20)
-  attack=FGSM(model,device)
+  attack=fgsm.FGSM(model,device)
   testd=Test_Attack(attack,test_loader,device,epsilons)
-
+  testd.test()
+  
