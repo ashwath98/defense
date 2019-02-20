@@ -6,7 +6,6 @@ import torch.optim as optim
 from torchvision import datasets, transforms
 import numpy as np
 import matplotlib.pyplot as plt
-
 class Net(nn.Module):
   
   
