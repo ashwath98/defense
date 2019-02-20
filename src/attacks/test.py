@@ -1,61 +1,68 @@
 class Test_Attack:
 
   def __init__(self, attack, test_data, device, epsilons):
-    """
-    parameters:-
-    attack:-attack to be tested
-    test_data:-test loader object to load the test data
-    device:-torch.device object 
-    epsilons:-list of epsilon values to test"""
-
     self.attack = attack
     self.test_data = test_data
     self.device = device
     self.epsilons = epsilons
+    self.batch_size = test_data.batch_size
 
   def test(self):
-    """ returns accuracies and a sample of adversarial examples for each epsilon value"""
+
     accuracies = []
     examples = []  #Run test for each epsilon
     for eps in self.epsilons:
 
-      acc, ex = self.test_eps_value(eps)
+      acc, ex = self.evaluate(eps)
       accuracies.append(acc)
       examples.append(ex)
     return accuracies, examples
 
-  def test_eps_value(self, epsilon):
-    """ generates adversarial examples and calculates accuracy of predicting adversary for a particular epsilon value"""
+  def evaluate(self, epsilon, eval_steps=None):
+    total_examples = len(
+        self.test_data
+    ) * self.batch_size if eval_steps is None else self.batch_size * eval_steps
 
+    eval_step_no = 0
     correct = 0
     adv_examples = []
+    count3 = 0
     for data, target in self.test_data:
       data, target = data.to(self.device), target.to(self.device)
 
-      init_pred, perturbed_data, final_pred = self.attack.generate(
-          data, target, epsilon)
+      init_pred, perturbed_data = self.attack.perturb(data, epsilon, y=target)
+      final_pred = self.attack.generate(perturbed_data)
 
-      if init_pred != target:
+      i = 0
 
-        continue
-      if final_pred == target:
+      for t in target:
 
-        correct += 1
-        # Special case for saving 0 epsilon examples
-        if (epsilon == 0) and (len(adv_examples) < 5):
+        if (init_pred[i].item() != t):
+          i += 1
+          continue
 
-          adv_ex = perturbed_data.squeeze().detach().cpu().numpy()
-          adv_examples.append((init_pred, final_pred, adv_ex))
+        if final_pred[i].item() == t:
+          correct += 1
+          # Special case for saving 0 epsilon examples
+          if (epsilon == 0) and (len(adv_examples) < 5):
+            adv_ex = perturbed_data[i, :, :, :].squeeze().detach().cpu().numpy()
+            adv_examples.append((init_pred, final_pred, adv_ex))
 
         else:
 
           # Save some adv examples for visualization later
           if len(adv_examples) < 5:
 
-            adv_ex = perturbed_data.squeeze().detach().cpu().numpy()
+            adv_ex = perturbed_data[i, :, :, :].squeeze().detach().cpu().numpy()
             adv_examples.append((init_pred, final_pred, adv_ex))
-    final_acc = correct / float(len(self.test_data))
+
+        i += 1
+      eval_step_no += 1
+      if eval_steps is not None and eval_steps_no == eval_steps:
+        break
+
+    final_acc = correct / float(total_examples)
     print("Epsilon: {}\tTest Accuracy = {} / {} = {}".format(
-        epsilon, correct, len(self.test_data), final_acc))
+        epsilon, correct, total_examples, final_acc))
 
     return final_acc, adv_examples

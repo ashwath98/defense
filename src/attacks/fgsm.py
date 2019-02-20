@@ -10,22 +10,26 @@ from abc import ABC, abstractmethod
 
 class Attack(ABC):
 
-  def __init__(self, model, device, targeted=False, min_value=0, max_value=1):
+  def __init__(self, model, device, min_value=0, max_value=1):
     self.model = model
     self.device = device
     self.min_value = min_value
     self.max_value = max_value
-    self.targeted = targeted
 
   @abstractmethod
-  def generate(self, data, target, epsilon):
+  def perturb(self, data, epsilon, y=None, y_target=None):
+    raise NotImplementedError
 
-    pass
+  def generate(self, perturbed_data):
+
+    output = self.model(perturbed_data)
+    final_pred = output.max(1, keepdim=True)[1]
+    return final_pred
 
 
 class FGSM(Attack):
 
-  def __init__(self, model, device, targeted=False, min_value=0, max_value=1):
+  def __init__(self, model, device, min_value=0, max_value=1):
     """
         parameters:-
         model :-The model under attack
@@ -41,23 +45,13 @@ class FGSM(Attack):
         Case 3 :-y is None and targeted is False ... then the predicted outputs of the model are treated as the real outputs and the attack takes place
         Case 4 :-y is None and targeted is True .. Invalid Input"""
 
-    super().__init__(model, device, targeted, min_value, max_value)
+    super().__init__(model, device, min_value, max_value)
 
-  def fgsm_update(self, image, epsilon, data_grad):
-    """Update the image with gradients of input"""
+  def perturb(self, data, epsilon, y=None, y_target=None):
 
-    sign_data_grad = data_grad.sign()
-    perturbed_image = image + epsilon * sign_data_grad
-    perturbed_image = torch.clamp(perturbed_image, self.min_value,
-                                  self.max_value)
-    return perturbed_image
+    if y_target is not None and type(y_target) != torch.Tensor:
 
-  def generate(self, data, y, epsilon):
-
-    if self.targeted == True and y is None:
-
-      print("label should be specified when targeted is true")
-      return -1, -1, -1
+      y = torch.Tensor([y_target]).type(torch.int64)
 
     if y is not None and type(y) != torch.Tensor:
 
@@ -68,21 +62,22 @@ class FGSM(Attack):
     output = self.model(data)
     init_pred = output.max(1, keepdim=True)[1]
     if y is None:
-
       # if no y is specified use predictions as the label for the attack
       target = init_pred.view(1)
     else:
-
       target = y  # use y itself as the target
     target = target.to(self.device)
     loss = F.nll_loss(output, target)
-    if self.targeted:
+    if y_target is not None:
+
       loss = -loss
     self.model.zero_grad()
 
     loss.backward()
     data_grad = data.grad.data
-    perturbed_data = self.fgsm_update(data, epsilon, data_grad)
-    output = self.model(perturbed_data)
-    final_pred = output.max(1, keepdim=True)[1]
-    return init_pred.item(), perturbed_data, final_pred.item()
+
+    sign_data_grad = data_grad.sign()
+    perturbed_image = data + epsilon * sign_data_grad
+    perturbed_image = torch.clamp(perturbed_image, self.min_value,
+                                  self.max_value)
+    return init_pred, perturbed_image
