@@ -1,5 +1,6 @@
 from setup_test import create_model
-import fgsm
+import attacks
+
 
 class Test_Attack:
 
@@ -29,13 +30,11 @@ class Test_Attack:
     eval_step_no = 0
     correct = 0
     adv_examples = []
-    count3 = 0
     for data, target in self.test_data:
       data, target = data.to(self.device), target.to(self.device)
 
-      init_pred, perturbed_data = self.attack.perturb(data, epsilon, y=target)
-      final_pred = self.attack.generate(perturbed_data)
-
+      init_pred, perturbed_data, final_pred = self.attack.generate(
+          data, epsilon, y=target)
       i = 0
 
       for t in target:
@@ -70,14 +69,14 @@ class Test_Attack:
 
     return final_acc, adv_examples
 
-if __name__ == '__main__':
-  
-  epsilons = [0, .05, .1, .15, .2, .25, .3]
-  model,test_loader,device=create_model(20)
-  attack=fgsm.PGD(model,device)
-  testd=Test_Attack(attack,test_loader,device,epsilons)
-  testd.test()
-  attack=fgsm.FGSM(model,device)
-  testd=Test_Attack(attack,test_loader,device,epsilons)
-  testd.test()
 
+if __name__ == '__main__':
+
+  epsilons = [0, .05, .2, .25, .3]
+  model, test_loader, device = create_model(20)
+  attack = attacks.FGSM(model, device)
+  testd = Test_Attack(attack, test_loader, device, epsilons)
+  testd.test()
+  attack = attacks.PGD(model, device)
+  testd = Test_Attack(attack, test_loader, device, epsilons)
+  testd.test()
