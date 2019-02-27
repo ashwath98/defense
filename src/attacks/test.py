@@ -1,5 +1,6 @@
 from setup_test import create_model
 import attacks
+import torch
 
 
 class Test_Attack:
@@ -35,30 +36,9 @@ class Test_Attack:
 
       init_pred, perturbed_data, final_pred = self.attack.generate(
           data, epsilon, y=target)
-      i = 0
-
-      for t in target:
-
-        if (init_pred[i].item() != t):
-          i += 1
-          continue
-
-        if final_pred[i].item() == t:
-          correct += 1
-          # Special case for saving 0 epsilon examples
-          if (epsilon == 0) and (len(adv_examples) < 5):
-            adv_ex = perturbed_data[i, :, :, :].squeeze().detach().cpu().numpy()
-            adv_examples.append((init_pred, final_pred, adv_ex))
-
-        else:
-
-          # Save some adv examples for visualization later
-          if len(adv_examples) < 5:
-
-            adv_ex = perturbed_data[i, :, :, :].squeeze().detach().cpu().numpy()
-            adv_examples.append((init_pred, final_pred, adv_ex))
-
-        i += 1
+      target = target.view((20, 1))
+      correct += torch.mm((init_pred == target).t(),
+                          (init_pred == final_pred)).item()
       eval_step_no += 1
       if eval_steps is not None and eval_steps_no == eval_steps:
         break
