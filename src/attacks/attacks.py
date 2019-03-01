@@ -42,50 +42,42 @@ class FGSM(Attack):
 
     super().__init__(model, device, min_value, max_value)
 
-  def perturb(self, data, epsilon):
+  def perturb(self, data, epsilon, output, target, y_target):
     """
     performs perturbation on the input in accordance with fgsm attack
     inputs :- 
           data :- the input image
           epsilon :- the epsilon values with which to perturb
+          output :- output values of the network
+          target :-target values 
+          y_target :- None if Untargeted attack
+
 
     returns :-the perturbed matrix
     """
+    loss = F.nll_loss(output, target)
+    if y_target is not None:
+      loss = -loss
+    self.model.zero_grad()
+    loss.backward()
     data_grad = data.grad.data
     sign_data_grad = data_grad.sign()
     perturbed_matrix = epsilon * sign_data_grad
     return perturbed_matrix
 
   def generate(self, data, epsilon, y=None, y_target=None):
-
-    if y_target is not None and type(y_target) != torch.Tensor:
-
-      y = torch.Tensor([y_target]).type(torch.int64)
-
-    if y is not None and type(y) != torch.Tensor:
-
-      y = torch.Tensor([y]).type(torch.int64)
-
     data = data.to(self.device)
     data.requires_grad = True
     output = self.model(data)
     init_pred = output.max(1, keepdim=True)[1]
-    if y is None:
-      # if no y is specified use predictions as the label for the attack
-      target = init_pred.view(1)
+    if y_target is not None:  # if no y is specified use predictions as the label for the attack
+      target = y_target
+    elif y is None:
+      target = init_pred
     else:
       target = y  # use y itself as the target
     target = target.to(self.device)
-    loss = F.nll_loss(output, target)
-    if y_target is not None:
-
-      loss = -loss
-    self.model.zero_grad()
-
-    loss.backward()
-    data_grad = data.grad.data
-
-    perturbed_matrix = self.perturb(data, epsilon)
+    perturbed_matrix = self.perturb(data, epsilon, output, target, y_target)
     perturbed_data = data + perturbed_matrix
     perturbed_data = torch.clamp(perturbed_data, self.min_value, self.max_value)
     output = self.model(perturbed_data)
