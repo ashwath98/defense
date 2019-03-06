@@ -104,10 +104,12 @@ class PGD(FGSM):
           X_img.cpu().numpy().shape).astype('float32')
     else:
       X = np.copy(X)
-
+    epsilon_ball_lb = torch.from_numpy(X_img.cpu().numpy() - epsilon).to(
+        self.device)
+    epsilon_ball_ub = torch.from_numpy(X_img.cpu().numpy() + epsilon).to(
+        self.device)
     data = torch.from_numpy(X)
     data = data.to(self.device)
-    data.requires_grad = True
     output = self.model(data)
     init_pred = output.max(1, keepdim=True)[1]
     if y_target is not None:  # if no y is specified use predictions as the label for the attack
@@ -119,17 +121,16 @@ class PGD(FGSM):
     for i in range(self.iters):
 
       y_var = Variable(torch.LongTensor(target)).to(self.device)
-      X_var = torch.from_numpy(X).to(self.device)
+      X_var = data.clone()
       X_var.requires_grad = True
       output = self.model(X_var)
       perturbed_matrix = self.perturb(X_var, self.step_size, output, y_var,
                                       y_target)
-      X += perturbed_matrix.cpu().numpy()
-      X = np.clip(X,
-                  X_img.cpu().numpy() - epsilon,
-                  X_img.cpu().numpy() + epsilon)
-      X = np.clip(X, self.min_value, self.max_value)  # ensure valid pixel range
-    perturbed_image = torch.from_numpy(X)
+      data = data + perturbed_matrix
+      data = torch.max(torch.min(data, epsilon_ball_ub), epsilon_ball_lb)
+      data = torch.clamp(data, self.min_value,
+                         self.max_value)  # ensure valid pixel range
+    perturbed_image = data
     perturbed_image = perturbed_image.to(self.device)
     output = self.model(perturbed_image)
     final_pred = output.max(1, keepdim=True)[1]
