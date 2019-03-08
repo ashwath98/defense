@@ -99,16 +99,14 @@ class PGD(FGSM):
 
   def generate(self, X_img, epsilon, y=None, y_target=None):
     if self.rand:
-      X = X_img.cpu().numpy() + np.random.uniform(
-          -epsilon, epsilon,
-          X_img.cpu().numpy().shape).astype('float32')
+      X = X_img + torch.tensor(
+          np.random.uniform(-epsilon, epsilon, X_img.size())).type(
+              torch.FloatTensor).to(self.device)
     else:
-      X = np.copy(X)
-    epsilon_ball_lb = torch.from_numpy(X_img.cpu().numpy() - epsilon).to(
-        self.device)
-    epsilon_ball_ub = torch.from_numpy(X_img.cpu().numpy() + epsilon).to(
-        self.device)
-    data = torch.from_numpy(X)
+      X = X_img.clone()
+    epsilon_ball_lb = (X_img - epsilon).to(self.device)
+    epsilon_ball_ub = (X_img + epsilon).to(self.device)
+    data = X.clone()
     data = data.to(self.device)
     output = self.model(data)
     init_pred = output.max(1, keepdim=True)[1]
