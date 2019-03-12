@@ -118,7 +118,7 @@ class PGD(FGSM):
       target = y  # use y itself as the target
     for i in range(self.iters):
 
-      y_var = Variable(torch.LongTensor(target)).to(self.device)
+      y_var = Variable((target)).to(self.device)
       X_var = data.clone()
       X_var.requires_grad = True
       output = self.model(X_var)
