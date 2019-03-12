@@ -60,10 +60,9 @@ class Test_Attack:
 
       init_pred, perturbed_data, final_pred = self.attack.generate(
           data, epsilon, y=target)
-      target = target.view((20, 1))
-      init_pred, final_pred, target = init_pred.cpu(), final_pred.cpu(), target.cpu()
-      correct += torch.mm((init_pred == target).t(),
-                          (init_pred == final_pred)).item()
+      target = target.view((20, 1)).float()
+      correct += torch.mm(((init_pred.float() == target).t()).float(),
+                          (init_pred == final_pred).float()).item()
       eval_step_no += 1
       if eval_steps is not None and eval_steps_no == eval_steps:
         break
