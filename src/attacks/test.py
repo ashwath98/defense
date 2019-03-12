@@ -1,6 +1,30 @@
 from setup_test import create_model
 import attacks
 import torch
+import argparse
+
+parser = argparse.ArgumentParser(description='PyTorch Adversarial Attacks')
+
+parser.add_argument(
+    '--hparams', type=str, required=True, help='Hyperparameters string')
+parser.add_argument(
+    '--output_dir',
+    type=str,
+    help='Output directory for storing ckpts. Default is in runs/hparams')
+parser.add_argument(
+    '--use_colab', type=bool, default=False, help='Use Google colaboratory')
+
+args = parser.parse_args()
+
+if not args.use_colab:
+  OUTPUT_DIR = 'runs/' + args.hparams if args.output_dir is None else args.output_dir
+  if args.output_dir is None and not os.path.isdir('runs'):
+    os.mkdir('runs')
+else:
+  from google.colab import drive
+  drive.mount('/content/gdrive')
+  OUTPUT_DIR = '/content/gdrive/My Drive/runs'
+  if not os.path.isdir(OUTPUT_DIR): os.mkdir(OUTPUT_DIR)
 
 
 class Test_Attack:
@@ -37,6 +61,7 @@ class Test_Attack:
       init_pred, perturbed_data, final_pred = self.attack.generate(
           data, epsilon, y=target)
       target = target.view((20, 1))
+      init_pred, final_pred, target = init_pred.cpu(), final_pred.cpu(), target.cpu()
       correct += torch.mm((init_pred == target).t(),
                           (init_pred == final_pred)).item()
       eval_step_no += 1
