@@ -56,7 +56,7 @@ if __name__ == '__main__':
   model, test_loader, device = create_model(20)
   attack = attacks.FGSM(model, device)
   testd = Test_Attack(attack, test_loader, device, epsilons)
-  #testd.test()
+  testd.test()
   attack = attacks.PGD(model, device)
   testd = Test_Attack(attack, test_loader, device, epsilons)
   testd.test()
