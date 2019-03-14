@@ -9,9 +9,7 @@ parser = argparse.ArgumentParser(description='PyTorch Adversarial Attacks')
 parser.add_argument(
     '--hparams', type=str, required=True, help='Hyperparameters string')
 parser.add_argument(
-    '--model_dir',
-    type=str,
-    help='Output directory for storing ckpts. Default is in runs/hparams')
+    '--model_dir', type=str, help='directory where model is present.')
 parser.add_argument(
     '--use_colab', type=bool, default=False, help='Use Google colaboratory')
 
