@@ -1,8 +1,9 @@
 from setup_test import create_model
-import attacks
+from attacks import get_attack
 import torch
 import argparse
-
+from hparams.registry import get_hparams
+import os
 parser = argparse.ArgumentParser(description='PyTorch Adversarial Attacks')
 
 parser.add_argument(
@@ -25,6 +26,8 @@ else:
   drive.mount('/content/gdrive')
   OUTPUT_DIR = '/content/gdrive/My Drive/runs'
   if not os.path.isdir(OUTPUT_DIR): os.mkdir(OUTPUT_DIR)
+
+hparams = get_hparams(args.hparams)
 
 
 class Test_Attack:
@@ -60,7 +63,7 @@ class Test_Attack:
 
       init_pred, perturbed_data, final_pred = self.attack.generate(
           data, epsilon, y=target)
-      target = target.view((20, 1)).float()
+      target = target.view((self.batch_size, 1)).float()
       correct += torch.mm(((init_pred.float() == target).t()).float(),
                           (init_pred == final_pred).float()).item()
       eval_step_no += 1
@@ -76,11 +79,8 @@ class Test_Attack:
 
 if __name__ == '__main__':
 
-  epsilons = [0, .05, .2, .25, .3]
-  model, test_loader, device = create_model(20)
-  attack = attacks.FGSM(model, device)
-  testd = Test_Attack(attack, test_loader, device, epsilons)
-  testd.test()
-  attack = attacks.PGD(model, device)
-  testd = Test_Attack(attack, test_loader, device, epsilons)
+  model, test_loader, device = create_model(hparams.batch_size,
+                                            hparams.model_path)
+  attack = get_attack(model, device, hparams.attack)
+  testd = Test_Attack(attack, test_loader, device, hparams.epsilons)
   testd.test()

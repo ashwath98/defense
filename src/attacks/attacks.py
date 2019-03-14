@@ -133,3 +133,10 @@ class PGD(FGSM):
     output = self.model(perturbed_image)
     final_pred = output.max(1, keepdim=True)[1]
     return init_pred, perturbed_image, final_pred
+
+
+def get_attack(model, device, attack):
+  if attack == "FGSM":
+    return FGSM(model, device)
+  elif attack == "PGD":
+    return PGD(model, device)
