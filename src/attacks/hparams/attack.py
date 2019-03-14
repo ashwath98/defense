@@ -12,7 +12,6 @@ class HParams():
 def mnist_temp_attack_fgsm():
   hps = HParams()
   hps.epsilons = [0, .05, .2, .25, .3]
-  hps.model_path = "lenet_mnist_model.pth"
   hps.batch_size = 20
   hps.attack = "FGSM"
   return hps
@@ -22,7 +21,6 @@ def mnist_temp_attack_fgsm():
 def mnist_temp_attack_pgd():
   hps = HParams()
   hps.epsilons = [0, .05, .2, .25, .3]
-  hps.model_path = "lenet_mnist_model.pth"
   hps.batch_size = 20
   hps.attack = "PGD"
   return hps

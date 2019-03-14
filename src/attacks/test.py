@@ -9,7 +9,7 @@ parser = argparse.ArgumentParser(description='PyTorch Adversarial Attacks')
 parser.add_argument(
     '--hparams', type=str, required=True, help='Hyperparameters string')
 parser.add_argument(
-    '--output_dir',
+    '--model_dir',
     type=str,
     help='Output directory for storing ckpts. Default is in runs/hparams')
 parser.add_argument(
@@ -18,14 +18,13 @@ parser.add_argument(
 args = parser.parse_args()
 
 if not args.use_colab:
-  OUTPUT_DIR = 'runs/' + args.hparams if args.output_dir is None else args.output_dir
-  if args.output_dir is None and not os.path.isdir('runs'):
+  OUTPUT_DIR = 'runs/' + args.hparams
+  if not os.path.isdir('runs'):
+
     os.mkdir('runs')
 else:
   from google.colab import drive
   drive.mount('/content/gdrive')
-  OUTPUT_DIR = '/content/gdrive/My Drive/runs'
-  if not os.path.isdir(OUTPUT_DIR): os.mkdir(OUTPUT_DIR)
 
 hparams = get_hparams(args.hparams)
 
@@ -79,8 +78,7 @@ class Test_Attack:
 
 if __name__ == '__main__':
 
-  model, test_loader, device = create_model(hparams.batch_size,
-                                            hparams.model_path)
+  model, test_loader, device = create_model(hparams.batch_size, args.model_dir)
   attack = get_attack(model, device, hparams.attack)
   testd = Test_Attack(attack, test_loader, device, hparams.epsilons)
   testd.test()
