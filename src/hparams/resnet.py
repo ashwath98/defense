@@ -12,8 +12,8 @@ class HParams():
     self.momentum = 0.9
     self.weight_decay = 5e-4
     self.num_epochs = 256
-    self.eval_and_save_every = 1000
-    self.eval_steps = 100
+    self.eval_and_save_every = 100
+    self.eval_steps = 1
     #TODO enforce the below flags 
     self.image_aug = False
     self.per_image_standardization = True
