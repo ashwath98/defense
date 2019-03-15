@@ -91,9 +91,9 @@ def train(steps, trainloader, net, criterion, optimizer, test_loader=None):
   total = 0
   n_epochs = 1
   batch_idx = 0
-  steps = steps - start_step
+  global start_step
   start_step = 0
-  print("The start_step" + start_step)
+  steps -= start_step
   iterator = iter(trainloader)
   for batch_idx in tqdm(range(start_step, steps, 1)):
     if batch_idx == n_epochs * len(trainloader):
