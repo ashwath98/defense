@@ -6,6 +6,7 @@ import torch.nn as nn
 import torch.optim as optim
 import torch.nn.functional as F
 import torch.backends.cudnn as cudnn
+from tqdm import tqdm
 import torchvision
 import torchvision.transforms as transforms
 
@@ -13,6 +14,7 @@ import os
 import argparse
 
 from src.models.resnet import ResNet18
+from src.utils.misc_utils import progress_bar
 from src.utils.load_data import get_data
 from src.hparams.registry import get_hparams
 from src.models.registry import get_model
@@ -35,12 +37,10 @@ args = parser.parse_args()
 hparams = get_hparams(args.hparams)
 
 if not args.use_colab:
-  from tqdm import tqdm
   OUTPUT_DIR = 'runs/' + args.hparams if args.output_dir is None else args.output_dir
   if args.output_dir is None and not os.path.isdir('runs'):
     os.mkdir('runs')
 else:
-  from tqdm import tqdm_notebook as tqdm
   from google.colab import drive
   drive.mount('/content/gdrive')
   OUTPUT_DIR = '/content/gdrive/My Drive/runs'
