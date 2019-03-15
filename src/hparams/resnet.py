@@ -10,7 +10,7 @@ class HParams():
     self.targeted_unit = False
     self.targ_perc = 0.0
     self.drop_rate = 0.0
-    self.learning_rate = 0.1
+    self.learning_rate = 0.4
     self.momentum = 0.9
     self.weight_decay = 5e-4
     self.num_epochs = 256
