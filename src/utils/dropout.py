@@ -15,7 +15,7 @@ def targeted_weight_dropout(w, params, is_training):
   norm = torch.abs(w)
   idx = int(targ_perc * w.shape[0])
   threshold = (torch.sort(norm, dim=0)[0])[idx]
-  mask = norm < (threshold[None, :])
+  mask = norm < threshold
 
   if not is_training:
     #Inference
@@ -30,7 +30,8 @@ def targeted_weight_dropout(w, params, is_training):
   w = (1. - mask) * w
 
   w = w.transpose(0, 1).view(w_shape)
-  return (w)
+
+  return w
 
 
 def targeted_unit_dropout(w, params, is_training):

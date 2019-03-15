@@ -85,6 +85,8 @@ def create_model():
 
 # Training
 def train(steps, trainloader, net, criterion, optimizer, test_loader=None):
+  scheduler = torch.optim.lr_scheduler.MultiStepLR(
+      optimizer, milestones=[40000, 60000, 80000], gamma=0.1)
   net.train()
   train_loss = 0
   correct = 0
@@ -111,10 +113,10 @@ def train(steps, trainloader, net, criterion, optimizer, test_loader=None):
     correct += predicted.eq(targets).sum().item()
 
     if batch_idx % hparams.eval_and_save_every == 0:
-      print("Train Accuracy: {}".format(correct / total))
+      print("Train Accuracy: {}\nLoss: {}".format((correct / total), loss))
       test(hparams.eval_steps, testloader, net, criterion, int(batch_idx))
 
-    optimizer.step()
+    scheduler.step()
     train_loss += loss.item()
 
 
