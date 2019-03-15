@@ -1,5 +1,5 @@
-from setup_test import create_model
-from attacks import get_attack
+from .setup_test import create_model
+from .attacks import get_attack
 import torch
 import argparse
 from hparams.registry import get_hparams
@@ -25,6 +25,11 @@ else:
   drive.mount('/content/gdrive')
 
 hparams = get_hparams(args.hparams)
+
+from .attacks import PGD, FGSM
+from .setup_test import create_model
+
+from ..hparams.registry import get_hparams
 
 
 class Test_Attack:
