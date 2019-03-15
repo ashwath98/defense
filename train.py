@@ -102,14 +102,16 @@ def train(steps, trainloader, net, criterion, optimizer, test_loader=None):
     outputs = net(inputs, hparams)
     loss = criterion(outputs, targets)
     loss.backward()
-    optimizer.step()
-    train_loss += loss.item()
     _, predicted = outputs.max(1)
     total += targets.size(0)
     correct += predicted.eq(targets).sum().item()
+
     if batch_idx % hparams.eval_and_save_every == 0:
       print("Train Accuracy: {}".format(correct / total))
       test(hparams.eval_steps, testloader, net, criterion, int(batch_idx))
+
+    optimizer.step()
+    train_loss += loss.item()
 
 
 def test(steps, testloader, net, criterion, curr_step):
@@ -119,7 +121,7 @@ def test(steps, testloader, net, criterion, curr_step):
   total = 0
   n_epochs = 1
   with torch.no_grad():
-    iterator = iter(trainloader)
+    iterator = iter(testloader)
     for batch_idx in range(steps):
       if batch_idx == (n_epochs * len(testloader)):
         n_epochs = n_epochs + 1
