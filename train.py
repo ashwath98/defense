@@ -141,6 +141,7 @@ def test(steps, testloader, net, criterion, curr_step):
   acc = 100. * correct / total
   print("Test Accuracy: ", acc)
   print('Saving..')
+  print("File name" + OUTPUT_DIR + '/ckpt-{}.t7'.format(str(curr_step)))
   state = {
       'net': net.state_dict(),
       'acc': acc,
