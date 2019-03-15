@@ -9,9 +9,10 @@ import torch.backends.cudnn as cudnn
 from tqdm import tqdm
 import torchvision
 import torchvision.transforms as transforms
-
+import re
 import os
 import argparse
+import re
 
 from src.models.resnet import ResNet18
 from src.utils.misc_utils import progress_bar
@@ -66,9 +67,11 @@ def create_model():
     # Load checkpoint.
     print('==> Resuming from checkpoint..')
     assert os.path.isdir(OUTPUT_DIR), 'Error: no checkpoint directory found!'
-    print(sorted(os.listdir(OUTPUT_DIR))[-1])
-    checkpoint = torch.load(OUTPUT_DIR + '/' +
-                            sorted(os.listdir(OUTPUT_DIR))[-1])
+    model_dir = (OUTPUT_DIR + '/' + 'ckpt-' + min([
+        int(re.findall("[0-9]+\.", x)[0][:-1]) for x in os.listdir(OUTPUT_DIR)
+    ]) + '.t7')
+    print(model_dir)
+    checkpoint = torch.load(model_dir)
     net.load_state_dict(checkpoint['net'])
     best_acc = checkpoint['acc']
     global start_step
