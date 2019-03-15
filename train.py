@@ -66,7 +66,7 @@ def create_model():
     # Load checkpoint.
     print('==> Resuming from checkpoint..')
     assert os.path.isdir(OUTPUT_DIR), 'Error: no checkpoint directory found!'
-    print(os.listdir(OUTPUT_DIR))[-1]
+    print(sorted(os.listdir(OUTPUT_DIR))[-1])
     checkpoint = torch.load(OUTPUT_DIR + '/' +
                             sorted(os.listdir(OUTPUT_DIR))[-1])
     net.load_state_dict(checkpoint['net'])
