@@ -1,16 +1,15 @@
 import torch
-import torch.nn.functional as F
 from src.utils.dropout import targeted_weight_dropout, targeted_unit_dropout
 
 
-def conv2d(x, weight, stride, padding, params, is_training):
-  dropped_weights = weight
+def conv(weight, params, is_training):
 
+  #TODO - actually pass the is_training mode here. Not just True/False
   if params.targeted_weight:
-    dropped_weights = torch.nn.Parameter(
+    weight = torch.nn.Parameter(
         targeted_weight_dropout(weight, params, is_training))
   elif params.targeted_unit:
-    dropped_weights = torch.nn.Parameter(
+    weight = torch.nn.Parameter(
         targeted_weight_dropout(weight, params, is_training))
 
-  return F.conv2d(x, dropped_weights, stride=stride, padding=padding)
+  return weight

@@ -30,7 +30,7 @@ def targeted_weight_dropout(w, params, is_training):
   w = (1. - mask) * w
 
   w = w.transpose(0, 1).view(w_shape)
-
+  #print((w.numel() - w.nonzero().size(0)) / w.numel())
   return w
 
 

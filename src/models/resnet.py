@@ -2,7 +2,7 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from src.utils import model_utils
+from src.utils.model_utils import conv
 from src.models.registry import register
 
 
@@ -29,11 +29,17 @@ class BasicBlock(nn.Module):
               bias=False), nn.BatchNorm2d(self.expansion * planes))
 
   def forward(self, x, hparams):
-    out = model_utils.conv2d(x, self.conv1.weight, self.conv1.stride,
-                             self.conv1.padding, hparams, self.training)
+    #print(self.conv1.weight.numel() - self.conv1.weight.nonzero().size(0))
+    new_weights = conv(self.conv1.weight, hparams, self.training)
+    out = F.conv2d(
+        x, new_weights, stride=self.conv1.stride, padding=self.conv1.padding)
     out = F.relu(self.bn1(out))
-    out = model_utils.conv2d(out, self.conv2.weight, self.conv2.stride,
-                             self.conv2.padding, hparams, self.training)
+    new_weights_2 = conv(self.conv2.weight, hparams, self.training)
+    out = F.conv2d(
+        out,
+        new_weights_2,
+        stride=self.conv2.stride,
+        padding=self.conv2.padding)
     out = self.bn2(out)
     out += self.shortcut(x)
     out = F.relu(out)
@@ -65,15 +71,18 @@ class Bottleneck(nn.Module):
               bias=False), nn.BatchNorm2d(self.expansion * planes))
 
   def forward(self, x, hparams):
-    out = model_utils.conv2d(x, self.conv1.weight, self.conv1.stride,
-                             self.conv1.padding, hparams, self.training)
+    new_weights = conv(self.conv1.weight, hparams, self.training)
+    out = F.conv2d(
+        x, new_weights, stride=self.conv1.stride, padding=self.conv1.padding)
     out = F.relu(self.bn1(out))
-    out = model_utils.conv2d(out, self.conv2.weight, self.conv2.stride,
-                             self.conv2.padding, hparams, self.training)
+    new_weights_2 = conv(self.conv2.weight, hparams, self.training)
+    out = F.conv2d(
+        out,
+        new_weights_2,
+        stride=self.conv2.stride,
+        padding=self.conv2.padding)
     out = F.relu(self.bn2(out))
-    out = model_utils.conv2d(out, self.conv3.weight, self.conv3.stride,
-                             self.conv3.padding, hparams, self.training)
-    out = self.bn3(out)
+    out = self.bn3(self.conv3(out))
     out += self.shortcut(x)
     out = F.relu(out)
     return out
@@ -103,8 +112,9 @@ class ResNet(nn.Module):
     return nn.Sequential(*layers)
 
   def forward(self, x, hparams):
-    out = model_utils.conv2d(x, self.conv1.weight, self.conv1.stride,
-                             self.conv1.padding, hparams, self.training)
+    new_weights = conv(self.conv1.weight, hparams, self.training)
+    out = F.conv2d(
+        x, new_weights, stride=self.conv1.stride, padding=self.conv1.stride)
     out = F.relu(self.bn1(out))
     for i in range(len(self.layer1)):
       out = self.layer1[i](out, hparams)
