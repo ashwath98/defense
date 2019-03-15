@@ -68,7 +68,7 @@ def create_model():
     print('==> Resuming from checkpoint..')
     assert os.path.isdir(OUTPUT_DIR), 'Error: no checkpoint directory found!'
     model_dir = (OUTPUT_DIR + '/' + 'ckpt-' + str(
-        min([
+        max([
             int(re.findall("[0-9]+\.", x)[0][:-1])
             for x in os.listdir(OUTPUT_DIR)
         ])) + '.t7')
